@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  labels:
+    app: minio
+spec:
+  serviceName: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2020-09-02T18-19-50Z
+          env:
+            - name: MINIO_ACCESS_KEY
+              value: access_key
+            - name: MINIO_SECRET_KEY
+              value: secret_key
+          command:
+            - /bin/sh
+            - -ce
+            - /usr/bin/docker-entrypoint.sh minio -S /etc/minio/certs/ server /export
+          volumeMounts:
+            - mountPath: /export
+              name: export
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  volumeClaimTemplates:
+    - metadata:
+        labels:
+          app: minio
+        name: export
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  labels:
+    app: minio
+spec:
+  clusterIP: None
+  ports:
+    - port: 9000
+  selector:
+    app: minio
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-0
+  labels:
+    app: minio
+    node: "0"
+spec:
+  ports:
+    - port: 9000
+  selector:
+    app: minio
+    statefulset.kubernetes.io/pod-name: minio-0
+  type: ClusterIP
