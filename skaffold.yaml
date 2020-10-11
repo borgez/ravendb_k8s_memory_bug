@@ -1,0 +1,20 @@
+apiVersion: skaffold/v2beta7
+kind: Config
+metadata:
+  name: test
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: command
+      docker:
+        dockerfile: ./ConsoleApp1/Dockerfile
+      context: ./ConsoleApp1
+deploy:
+  kubectl:
+    flags:
+      global:
+        - --namespace=ravendb-test
+  kubeContext: docker-desktop
+
